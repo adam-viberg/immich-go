@@ -7,6 +7,7 @@ import (
 	"path"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 	"unsafe"
@@ -548,4 +549,42 @@ func sortAlbum(a map[string][]string) map[string][]string {
 		sort.Strings(a[k])
 	}
 	return a
+}
+
+func TestNewLocalFiles_ConflictingAlbumFlags(t *testing.T) {
+	ctx := context.Background()
+	recorder := &fileevent.Recorder{}
+	flags := &ImportFolderOptions{
+		ImportIntoAlbum:    "TestAlbum",
+		UsePathAsAlbumName: FolderModePath,
+	}
+
+	la, err := NewLocalFiles(ctx, recorder, flags)
+
+	if err == nil || !strings.Contains(err.Error(), "cannot use both --into-album and --folder-as-album") {
+		t.Errorf("Expected conflict error, got: %v", err)
+	}
+	if la != nil {
+		t.Errorf("Expected nil la due to error, got: %v", la)
+	}
+}
+
+func TestNewLocalFiles_PicasaAlbumEnabled(t *testing.T) {
+	ctx := context.Background()
+	recorder := &fileevent.Recorder{}
+	flags := &ImportFolderOptions{
+		PicasaAlbum: true,
+	}
+
+	la, err := NewLocalFiles(ctx, recorder, flags)
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if la == nil {
+		t.Errorf("Expected non-nil la, got nil")
+	}
+	if la != nil && la.picasaAlbums == nil {
+		t.Errorf("Expected la.picasaAlbums to be initialized, but it was nil")
+	}
 }
