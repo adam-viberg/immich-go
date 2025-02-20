@@ -557,8 +557,6 @@ func TestParseDir_WithJSON(t *testing.T) {
 	// Start a goroutine to consume the gOut channel
 	go func() {
 		for group := range gOut {
-				// Process the group as needed for your test
-				// For example, you might log it or perform assertions
 				t.Logf("Received group: %+v", group)
 		}
 	}()
@@ -610,8 +608,6 @@ func TestParseDir_ClosedContext(t *testing.T) {
 	// Start a goroutine to consume the gOut channel
 	go func() {
 		for group := range gOut {
-				// Process the group as needed for your test
-				// For example, you might log it or perform assertions
 				t.Logf("Received group: %+v", group)
 		}
 	}()
