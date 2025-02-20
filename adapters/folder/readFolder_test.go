@@ -14,6 +14,7 @@ import (
 	"github.com/kr/pretty"
 	"github.com/psanford/memfs"
 	"github.com/simulot/immich-go/app"
+	"github.com/simulot/immich-go/internal/assets"
 	cliflags "github.com/simulot/immich-go/internal/cliFlags"
 	"github.com/simulot/immich-go/internal/configuration"
 	"github.com/simulot/immich-go/internal/fileevent"
@@ -531,6 +532,113 @@ func TestInMemLocalAssetsWithTags(t *testing.T) {
 				pretty.Ldiff(t, c.want, got)
 			}
 		})
+	}
+}
+
+// Testing to read JSON from filestructure
+func TestParseDir_WithJSON(t *testing.T) {
+	t0 := time.Date(2021, 1, 1, 0, 0, 0, 0, time.Local)
+	ic := filenames.NewInfoCollector(time.Local, filetypes.DefaultSupportedMedia)
+	ctx := context.Background()
+	logFile := configuration.DefaultLogFile()
+	log := app.Log{
+		File:  logFile,
+		Level: "INFO",
+	}
+	err := log.OpenLogFile()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	recorder := fileevent.NewRecorder(log.Logger)
+	
+	gOut := make(chan *assets.Group)
+	defer close(gOut)
+	// Start a goroutine to consume the gOut channel
+	go func() {
+		for group := range gOut {
+				// Process the group as needed for your test
+				// For example, you might log it or perform assertions
+				t.Logf("Received group: %+v", group)
+		}
+	}()
+
+	fsys := newInMemFS("MemFS", ic).
+		addFile("root_01.jpg", t0).
+		addFile("photos/photo_01.jpg", t0).
+		addFile("photos/photo_01.json", t0).
+		addFile("photos/summer/photo_02.jpg", t0)
+	flags := &ImportFolderOptions{
+		UsePathAsAlbumName: FolderModePath,
+		InfoCollector:      ic,
+		SupportedMedia:     filetypes.DefaultSupportedMedia,
+	}
+	la, err := NewLocalFiles(ctx, recorder, flags, fsys)
+
+	if err != nil {
+		t.Errorf("Error, %v", err)
+		return
+	}
+
+	err = la.parseDir(ctx, fsys, "photos", gOut)
+
+	if err != nil {
+		t.Errorf("Error, %v", err)
+	}
+}
+
+// Test parseDir with canceled context
+func TestParseDir_ClosedContext(t *testing.T) {
+	t0 := time.Date(2021, 1, 1, 0, 0, 0, 0, time.Local)
+	ic := filenames.NewInfoCollector(time.Local, filetypes.DefaultSupportedMedia)
+	ctx, cancel := context.WithCancel(context.Background())
+	logFile := configuration.DefaultLogFile()
+	log := app.Log{
+		File:  logFile,
+		Level: "INFO",
+	}
+	err := log.OpenLogFile()
+	if err != nil {
+		t.Error(err)
+		cancel()
+		return
+	}
+	recorder := fileevent.NewRecorder(log.Logger)
+	
+	gOut := make(chan *assets.Group)
+	defer close(gOut)
+	// Start a goroutine to consume the gOut channel
+	go func() {
+		for group := range gOut {
+				// Process the group as needed for your test
+				// For example, you might log it or perform assertions
+				t.Logf("Received group: %+v", group)
+		}
+	}()
+
+	fsys := newInMemFS("MemFS", ic).
+		addFile("root_01.jpg", t0).
+		addFile("photos/photo_01.jpg", t0).
+		addFile("photos/summer/photo_02.jpg", t0)
+	flags := &ImportFolderOptions{
+		UsePathAsAlbumName: FolderModePath,
+		InfoCollector:      ic,
+		SupportedMedia:     filetypes.DefaultSupportedMedia,
+	}
+	la, err := NewLocalFiles(ctx, recorder, flags, fsys)
+
+	if err != nil {
+		t.Errorf("Error, %v", err)
+		cancel()
+		return
+	}
+
+	cancel()
+
+	err = la.parseDir(ctx, fsys, "photos", gOut)
+
+	if err == nil {
+		t.Errorf("Error, %v", err)
 	}
 }
 
