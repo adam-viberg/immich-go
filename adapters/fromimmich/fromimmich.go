@@ -135,41 +135,57 @@ func (f *FromImmich) getAssetsFromAlbums(ctx context.Context, grpChan chan *asse
 func (f *FromImmich) filterAsset(ctx context.Context, a *immich.Asset, grpChan chan *assets.Group) error {
 	var err error
 
+	fmt.Println(f)
+	// Checks if favourited asset and flag is favourite
+
 	// Checks if favourited asset and flag is favourite
 	if f.flags.Favorite && !a.IsFavorite {
+		coverageTester.WriteUniqueLine("filterAsset - Branch 1/16 Covered")
 		coverageTester.WriteUniqueLine("Branch 1")
 		return nil
 	}
 
 	// Probably filtering based on if photo is put in the bin
+	// Probably filtering based on if photo is put in the bin
 	if !f.flags.WithTrashed && a.IsTrashed {
+		coverageTester.WriteUniqueLine("filterAsset - Branch 2/16 Covered")
 		coverageTester.WriteUniqueLine("Branch 2")
 		return nil
 	}
 
 	// Refactor the album section
+	// Refactor the album section
 	albums := immich.AlbumsFromAlbumSimplified(a.Albums)
 
 	// Some filter set up in getAsset to determine is albums much be fetched later.
+	// Some filter set up in getAsset to determine is albums much be fetched later.
 	if f.mustFetchAlbums && len(albums) == 0 {
+		coverageTester.WriteUniqueLine("filterAsset - Branch 3/16 Covered")
 		coverageTester.WriteUniqueLine("Branch 3")
 		albums, err = f.flags.client.Immich.GetAssetAlbums(ctx, a.ID)
 		if err != nil {
+			coverageTester.WriteUniqueLine("filterAsset - Branch 4/16 Covered")
 			coverageTester.WriteUniqueLine("Branch 4")
 			return f.logError(err)
 		}
 	}
 
 	// Checks if the asset is present in any albums by f.flags.Albums.
+
+	// Checks if the asset is present in any albums by f.flags.Albums.
 	if len(f.flags.Albums) > 0 && len(albums) > 0 {
+		coverageTester.WriteUniqueLine("filterAsset - Branch 5/16 Covered")
 		coverageTester.WriteUniqueLine("Branch 5")
 		keepMe := false
 		newAlbumList := []assets.Album{}
 		for _, album := range f.flags.Albums {
+			coverageTester.WriteUniqueLine("filterAsset - Branch 6/16 Covered")
 			coverageTester.WriteUniqueLine("Branch 6")
 			for _, aAlbum := range albums {
+				coverageTester.WriteUniqueLine("filterAsset - Branch 7/16 Covered")
 				coverageTester.WriteUniqueLine("Branch 7")
 				if album == aAlbum.Title {
+					coverageTester.WriteUniqueLine("filterAsset - Branch 8/16 Covered")
 					coverageTester.WriteUniqueLine("Branch 8")
 					keepMe = true
 					newAlbumList = append(newAlbumList, aAlbum)
@@ -177,6 +193,7 @@ func (f *FromImmich) filterAsset(ctx context.Context, a *immich.Asset, grpChan c
 			}
 		}
 		if !keepMe {
+			coverageTester.WriteUniqueLine("filterAsset - Branch 9/16 Covered")
 			coverageTester.WriteUniqueLine("Branch 9")
 			return nil
 		}
@@ -187,6 +204,7 @@ func (f *FromImmich) filterAsset(ctx context.Context, a *immich.Asset, grpChan c
 	// so we need to get the asset details
 	a, err = f.flags.client.Immich.GetAssetInfo(ctx, a.ID)
 	if err != nil {
+		coverageTester.WriteUniqueLine("filterAsset - Branch 10/16 Covered")
 		coverageTester.WriteUniqueLine("Branch 10")
 		return f.logError(err)
 	}
@@ -209,29 +227,38 @@ func (f *FromImmich) filterAsset(ctx context.Context, a *immich.Asset, grpChan c
 	}
 
 	// Filter on rating, unsure what kind of rating though.
+	// Filter on rating, unsure what kind of rating though.
 	if f.flags.MinimalRating > 0 && a.Rating < f.flags.MinimalRating {
+		coverageTester.WriteUniqueLine("filterAsset - Branch 11/16 Covered")
 		coverageTester.WriteUniqueLine("Branch 11")
 		return nil
 	}
 
 	// Filter asset on set date range.
+	// Filter asset on set date range.
 	if f.flags.DateRange.IsSet() {
+		coverageTester.WriteUniqueLine("filterAsset - Branch 12/16 Covered")
 		coverageTester.WriteUniqueLine("Branch 12")
 		if asset.CaptureDate.Before(f.flags.DateRange.After) || asset.CaptureDate.After(f.flags.DateRange.Before) {
+			coverageTester.WriteUniqueLine("filterAsset - Branch 13/16 Covered")
 			coverageTester.WriteUniqueLine("Branch 13")
 			return nil
 		}
 	}
 
 	// This part is used to channel the asset
+	// This part is used to channel the asset
 	g := assets.NewGroup(assets.GroupByNone, asset)
 	select {
 	case grpChan <- g:
+		coverageTester.WriteUniqueLine("filterAsset - Branch 14/16 Covered")
 		coverageTester.WriteUniqueLine("Branch 14")
 	case <-ctx.Done():
+		coverageTester.WriteUniqueLine("filterAsset - Branch 15/16 Covered")
 		coverageTester.WriteUniqueLine("Branch 15")
 		return ctx.Err()
 	}
+	coverageTester.WriteUniqueLine("filterAsset - Branch 16/16 Covered")
 	coverageTester.WriteUniqueLine("Branch 16")
 	return nil
 }
