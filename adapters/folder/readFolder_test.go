@@ -640,6 +640,106 @@ func TestParseDir_ClosedContext(t *testing.T) {
 	}
 }
 
+// Test parseDir, selecting a folder that does not exist
+func TestParseDir_NonExistingFolder(t *testing.T) {
+	t0 := time.Date(2021, 1, 1, 0, 0, 0, 0, time.Local)
+	ic := filenames.NewInfoCollector(time.Local, filetypes.DefaultSupportedMedia)
+	ctx := context.Background()
+	logFile := configuration.DefaultLogFile()
+	log := app.Log{
+		File:  logFile,
+		Level: "INFO",
+	}
+	err := log.OpenLogFile()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	recorder := fileevent.NewRecorder(log.Logger)
+	
+	gOut := make(chan *assets.Group)
+	defer close(gOut)
+	// Start a goroutine to consume the gOut channel
+	go func() {
+		for group := range gOut {
+				t.Logf("Received group: %+v", group)
+		}
+	}()
+
+	fsys := newInMemFS("MemFS", ic).
+		addFile("root_01.jpg", t0).
+		addFile("photos/photo_01.jpg", t0).
+		addFile("photos/summer/photo_02.jpg", t0)
+	flags := &ImportFolderOptions{
+		UsePathAsAlbumName: FolderModePath,
+		InfoCollector:      ic,
+		SupportedMedia:     filetypes.DefaultSupportedMedia,
+	}
+	la, err := NewLocalFiles(ctx, recorder, flags, fsys)
+
+	if err != nil {
+		t.Errorf("Error, %v", err)
+		return
+	}
+
+	err = la.parseDir(ctx, fsys, "test", gOut)
+
+	if err == nil {
+		t.Errorf("Error, %v", err)
+	}
+}
+
+// Test parseDir with SessionTag flag enabled 
+func TestParseDir_SessionTag(t *testing.T) {
+	t0 := time.Date(2021, 1, 1, 0, 0, 0, 0, time.Local)
+	ic := filenames.NewInfoCollector(time.Local, filetypes.DefaultSupportedMedia)
+	ctx := context.Background()
+	logFile := configuration.DefaultLogFile()
+	log := app.Log{
+		File:  logFile,
+		Level: "INFO",
+	}
+	err := log.OpenLogFile()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	recorder := fileevent.NewRecorder(log.Logger)
+	
+	gOut := make(chan *assets.Group)
+	defer close(gOut)
+	// Start a goroutine to consume the gOut channel
+	go func() {
+		for group := range gOut {
+				t.Logf("Received group: %+v", group)
+		}
+	}()
+
+	fsys := newInMemFS("MemFS", ic).
+		addFile("root_01.jpg", t0).
+		addFile("photos/photo_01.jpg", t0).
+		addFile("photos/summer/photo_02.testing", t0)
+	flags := &ImportFolderOptions{
+		UsePathAsAlbumName: FolderModePath,
+		InfoCollector:      ic,
+		SupportedMedia:     filetypes.DefaultSupportedMedia,
+		IgnoreSideCarFiles: true,
+		SessionTag: true,
+	}
+	la, err := NewLocalFiles(ctx, recorder, flags, fsys)
+
+	if err != nil {
+		t.Errorf("Error, %v", err)
+		return
+	}
+
+	err = la.parseDir(ctx, fsys, "photos", gOut)
+
+	if err != nil {
+		t.Errorf("Error, %v", err)
+	}
+}
+
 func compareAlbums(t *testing.T, a, b map[string][]string) {
 	a = sortAlbum(a)
 	b = sortAlbum(b)
