@@ -44,12 +44,8 @@ type LocalAssetBrowser struct {
 
 func NewLocalFiles(ctx context.Context, l *fileevent.Recorder, flags *ImportFolderOptions, fsyss ...fs.FS) (*LocalAssetBrowser, error) {
 
-
-	coverageTester.WriteUniqueLine("NewLocalFiles - Branch 0/7 Covered")
-
 	if flags.ImportIntoAlbum != "" && flags.UsePathAsAlbumName != FolderModeNone {
 
-		coverageTester.WriteUniqueLine("NewLocalFiles - Branch 1/7 Covered")
 		return nil, errors.New("cannot use both --into-album and --folder-as-album")
 	}
 
@@ -63,45 +59,38 @@ func NewLocalFiles(ctx context.Context, l *fileevent.Recorder, flags *ImportFold
 			flags.ManageHEICJPG != filters.HeicJpgNothing || flags.ManageRawJPG != filters.RawJPGNothing,
 	}
 
+	configureFlags(flags, &la)
+
+	la.groupers = append(la.groupers, series.Group)
+
+	return &la, nil
+}
+
+func configureFlags(flags *ImportFolderOptions, la *LocalAssetBrowser) {
 	if flags.PicasaAlbum {
-		coverageTester.WriteUniqueLine("NewLocalFiles - Branch 2/7 Covered")
-		la.picasaAlbums = gen.NewSyncMap[string, PicasaAlbum]() // make(map[string]PicasaAlbum)
+		la.picasaAlbums = gen.NewSyncMap[string, PicasaAlbum]()
 	}
 
 	if flags.InfoCollector == nil {
-		coverageTester.WriteUniqueLine("NewLocalFiles - Branch 3/7 Covered")
 		flags.InfoCollector = filenames.NewInfoCollector(flags.TZ, flags.SupportedMedia)
 	}
 
 	if flags.InclusionFlags.DateRange.IsSet() {
-		coverageTester.WriteUniqueLine("NewLocalFiles - Branch 4/7 Covered")
 		flags.InclusionFlags.DateRange.SetTZ(flags.TZ)
 	}
 
 	if flags.SessionTag {
-		coverageTester.WriteUniqueLine("NewLocalFiles - Branch 5/7 Covered")
 		flags.session = fmt.Sprintf("{immich-go}/%s", time.Now().Format("2006-01-02 15:04:05"))
 	}
 
-	// if flags.ExifToolFlags.UseExifTool {
-	// 	err := exif.NewExifTool(&flags.ExifToolFlags)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
 	if flags.ManageEpsonFastFoto {
-		coverageTester.WriteUniqueLine("NewLocalFiles - Branch 6/7 Covered")
 		g := epsonfastfoto.Group{}
 		la.groupers = append(la.groupers, g.Group)
 	}
+
 	if flags.ManageBurst != filters.BurstNothing {
-		coverageTester.WriteUniqueLine("NewLocalFiles - Branch 7/7 Covered")
 		la.groupers = append(la.groupers, burst.Group)
 	}
-	la.groupers = append(la.groupers, series.Group)
-
-	return &la, nil
 }
 
 func (la *LocalAssetBrowser) Browse(ctx context.Context) chan *assets.Group {
