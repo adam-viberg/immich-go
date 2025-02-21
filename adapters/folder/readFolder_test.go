@@ -7,6 +7,7 @@ import (
 	"path"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 	"unsafe"
@@ -20,6 +21,7 @@ import (
 	"github.com/simulot/immich-go/internal/fileevent"
 	"github.com/simulot/immich-go/internal/filenames"
 	"github.com/simulot/immich-go/internal/filetypes"
+	"github.com/simulot/immich-go/internal/filters"
 	"github.com/simulot/immich-go/internal/namematcher"
 )
 
@@ -652,4 +654,85 @@ func sortAlbum(a map[string][]string) map[string][]string {
 		sort.Strings(a[k])
 	}
 	return a
+}
+
+func TestNewLocalFiles_ConflictingAlbumFlags(t *testing.T) {
+	ctx := context.Background()
+	recorder := &fileevent.Recorder{}
+	flags := &ImportFolderOptions{
+		ImportIntoAlbum:    "TestAlbum",
+		UsePathAsAlbumName: FolderModePath,
+	}
+
+	la, err := NewLocalFiles(ctx, recorder, flags)
+
+	if err == nil || !strings.Contains(err.Error(), "cannot use both --into-album and --folder-as-album") {
+		t.Errorf("Expected conflict error, got: %v", err)
+	}
+	if la != nil {
+		t.Errorf("Expected nil la due to error, got: %v", la)
+	}
+}
+
+func TestNewLocalFiles_PicasaAlbumEnabled(t *testing.T) {
+	ctx := context.Background()
+	recorder := &fileevent.Recorder{}
+	flags := &ImportFolderOptions{
+		PicasaAlbum: true,
+	}
+
+	la, err := NewLocalFiles(ctx, recorder, flags)
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if la == nil {
+		t.Errorf("Expected non-nil la, got nil")
+	}
+	if la != nil && la.picasaAlbums == nil {
+		t.Errorf("Expected la.picasaAlbums to be initialized, but it was nil")
+	}
+}
+
+func TestNewLocalFiles_SessionTagEnabled(t *testing.T) {
+	ctx := context.Background()
+	recorder := &fileevent.Recorder{}
+	flags := &ImportFolderOptions{
+		SessionTag: true,
+	}
+
+	la, err := NewLocalFiles(ctx, recorder, flags)
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expectedPrefix := "{immich-go}/"
+	if la.flags.session == "" || !strings.HasPrefix(la.flags.session, expectedPrefix) {
+		t.Errorf("Expected session to start with %q, but got %q", expectedPrefix, la.flags.session)
+	}
+
+	_, err = time.Parse("2006-01-02 15:04:05", strings.TrimPrefix(la.flags.session, expectedPrefix))
+	if err != nil {
+		t.Errorf("Session timestamp format is incorrect: %v", err)
+	}
+}
+
+func TestNewLocalFiles_EpsonFastFotoAndBurstEnabled(t *testing.T) {
+	ctx := context.Background()
+	recorder := &fileevent.Recorder{}
+	flags := &ImportFolderOptions{
+		ManageEpsonFastFoto: true,
+		ManageBurst:         filters.BurstKeepJPEG,
+	}
+
+	la, err := NewLocalFiles(ctx, recorder, flags)
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	if len(la.groupers) < 2 {
+		t.Errorf("Expected at least 2 groupers in la.groupers, but got %d", len(la.groupers))
+	}
 }
