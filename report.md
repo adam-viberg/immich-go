@@ -1,6 +1,5 @@
 # Report for assignment 3
-
-This is a template for your report. You are free to modify it as needed. It is not required to use markdown for your report either, but the report has to be delivered in a standard, cross-platform format.
+This is group 13's assignment 3 report. 
 
 ## Project
 
@@ -8,7 +7,7 @@ Name: immich-go
 
 URL: [https://github.com/simulot/immich-go](https://github.com/simulot/immich-go)
 
-One or two sentences describing it: It is an open-source tool to upload large photo collections to a self-hosted Immich server. It is designed to streamline the uploading.
+Description: It is an open-source tool to upload large photo collections to a self-hosted Immich server. It is designed to streamline the uploading.
 
 ## Onboarding experience
 
