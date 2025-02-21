@@ -20,6 +20,7 @@ import (
 	"github.com/simulot/immich-go/internal/fileevent"
 	"github.com/simulot/immich-go/internal/filenames"
 	"github.com/simulot/immich-go/internal/filetypes"
+	"github.com/simulot/immich-go/internal/filters"
 	"github.com/simulot/immich-go/internal/namematcher"
 )
 
@@ -586,5 +587,48 @@ func TestNewLocalFiles_PicasaAlbumEnabled(t *testing.T) {
 	}
 	if la != nil && la.picasaAlbums == nil {
 		t.Errorf("Expected la.picasaAlbums to be initialized, but it was nil")
+	}
+}
+
+func TestNewLocalFiles_SessionTagEnabled(t *testing.T) {
+	ctx := context.Background()
+	recorder := &fileevent.Recorder{}
+	flags := &ImportFolderOptions{
+		SessionTag: true,
+	}
+
+	la, err := NewLocalFiles(ctx, recorder, flags)
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expectedPrefix := "{immich-go}/"
+	if la.flags.session == "" || !strings.HasPrefix(la.flags.session, expectedPrefix) {
+		t.Errorf("Expected session to start with %q, but got %q", expectedPrefix, la.flags.session)
+	}
+
+	_, err = time.Parse("2006-01-02 15:04:05", strings.TrimPrefix(la.flags.session, expectedPrefix))
+	if err != nil {
+		t.Errorf("Session timestamp format is incorrect: %v", err)
+	}
+}
+
+func TestNewLocalFiles_EpsonFastFotoAndBurstEnabled(t *testing.T) {
+	ctx := context.Background()
+	recorder := &fileevent.Recorder{}
+	flags := &ImportFolderOptions{
+		ManageEpsonFastFoto: true,
+		ManageBurst:         filters.BurstKeepJPEG,
+	}
+
+	la, err := NewLocalFiles(ctx, recorder, flags)
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	if len(la.groupers) < 2 {
+		t.Errorf("Expected at least 2 groupers in la.groupers, but got %d", len(la.groupers))
 	}
 }
