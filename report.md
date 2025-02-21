@@ -155,11 +155,11 @@ We used the cover tool that is already built into Go. It was well-documented and
 Steps:
 
 * Generate coverprofile from tests  
-  * Run \`go test \-coverprofile=coverage.out ./…\`  
+  * Run `go test -coverprofile=coverage.out ./...`  
 * Generate .txt file from coverprofile to see coverage for each function  
-  * Run \`go tool cover \-func=coverage.out \> coverageOut.txt\`  
+  * Run `go tool cover -func=coverage.out > coverageOut.txt`  
 * Generate browseabale coverprofile  
-  * Run \`go tool cover \-html=coverage.out \-o coverage.html\`
+  * Run `go tool cover -html=coverage.out -o coverage.html`
 
 ### Your own coverage tool
 
@@ -193,19 +193,25 @@ In the branch `coverage` do the following commands:
 Steps:
 
 * Generate coverprofile from tests  
-  * Run \`go test \-coverprofile=coverage.out ./…\`  
+  * Run `go test -coverprofile=coverage.out ./...`  
 * Generate .txt file from coverprofile to see coverage for each function  
-  * Run \`go tool cover \-func=coverage.out \> coverageOut.txt\`  
+  * Run `go tool cover -func=coverage.out > coverageOut.txt`  
 * Generate browseabale coverprofile  
-  * Run \`go tool cover \-html=coverage.out \-o coverage.html\`
+  * Run `go tool cover -html=coverage.out -o coverage.html`
 
-Report of new coverage: \[link\]
+Report of new coverage:
+In the `main` branc do the following commands
+Steps:
+
+* Generate coverprofile from tests  
+  * Run `go test -coverprofile=coverage.out ./...`  
+* Generate .txt file from coverprofile to see coverage for each function  
+  * Run `go tool cover -func=coverage.out > coverageOut.txt`  
+* Generate browseabale coverprofile  
+  * Run `go tool cover -html=coverage.out -o coverage.html`
 
 Test cases added: Two test cases per the five functions we have discussed above. 
 
-git diff ...
-
-Number of test cases added: two per team member (P)
 
 ## Self-assessment: Way of working
 
@@ -228,6 +234,10 @@ Måns Zellman: [`NewLocalFiles`](#newlocalfiles)
 Olivia Håkans: [`WriteAsset`](#writeasset)  
 Samvel Hovhannisyan: [`OpenClient`](#openclient)
 
+## P+ Contributions
+Måns Zellman:
+- 4 tests for [`NewLocalFiles`](#newlocalfiles)
+- Refactoring for [`NewLocalFiles`](#newlocalfiles) 
 
 ## Appendix (Functions)
 
